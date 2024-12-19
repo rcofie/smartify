@@ -55,18 +55,14 @@ AFRAME.registerComponent("ground-soil", {
   schema: {
     src: { type: "string", default: "" },
     scale: { type: "vec3", default: { x: 2, y: 2, z: 2 } },
-    sensitivity: { type: "number", default: 0.1 }, // Adjust movement speed
     position: { type: "vec3", default: { x: 0, y: 1.4, z: -0.75 } }, // Adjust movement speed
+    sensitivity: { type: "number", default: 1 }, // Enable look-controls
   },
 
   init: function () {
     const loader = new THREE.GLTFLoader();
     const el = this.el;
     const data = this.data;
-
-    const sensitivity = this.data.sensitivity;
-    let startAlpha = null;
-
     // Load the GLTF model
     loader.load(
       data.src,
@@ -83,37 +79,30 @@ AFRAME.registerComponent("ground-soil", {
         console.error("Error loading GLTF model:", error);
       }
     );
-
-    // Listen for device orientation events
-    window.addEventListener("deviceorientation", (event) => {
-      // Get alpha, beta, gamma values
-      // const alpha = event.alpha || 0; // Z-axis rotation
-      const beta = event.beta || 0; // X-axis tilt
-      const gamma = event.gamma || 0; // Y-axis tilt
-
-      // Normalize alpha to use as a base offset
-      // if (startAlpha === null) startAlpha = alpha;
-      // const adjustedAlpha = alpha - startAlpha;
-
-      // Compute offsets based on orientation
-      // const offsetX = gamma * sensitivity; // Side-to-side controls x
-      const offsetY = (beta * sensitivity) / 200; // Scale down Y-axis movement
-      // const offsetZ = (adjustedAlpha * sensitivity) / 100; // Scale down Z-axis movement
-
-      // Calculate new position relative to the starting position
-      const newPosition = {
-        x: data.position.x,
-        y: data.position.y + offsetY,
-        z: data.position.z,
-      };
-
-      // Apply the position to the entity
-      el.setAttribute("position", newPosition);
-
-      // Debug: log the position for testing
-      console.log(
-        `Position -> X: ${newPosition.x}, Y: ${newPosition.y}, Z: ${newPosition.z}`
-      );
-    });
   },
+  // update: function () {
+  //   // Listen for device orientation events
+  //   window.addEventListener("deviceorientation", (event) => {
+  //     // Get beta (X-axis tilt)
+  //     const beta = event.beta || 0; // Range is typically -90 to 90 for most devices
+
+  //     // Compute offsetY, invert beta to make Y decrease when tilting backward
+  //     const offsetY = (beta * this.data.sensitivity) / 200; // Negative sign to invert behavior
+
+  //     // Calculate new position relative to the starting position
+  //     const newPosition = {
+  //       x: this.data.position.x,
+  //       y: this.data.position.y - offsetY, // Add offsetY to move in the inverted direction
+  //       z: this.data.position.z,
+  //     };
+
+  //     // Apply the position to the entity
+  //     this.el.setAttribute("position", newPosition);
+
+  //     // Debug: log the position for testing
+  //     console.log(
+  //       `Position -> X: ${newPosition.x}, Y: ${newPosition.y}, Z: ${newPosition.z}`
+  //     );
+  //   });
+  // },
 });

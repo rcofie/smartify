@@ -39,86 +39,87 @@ AFRAME.registerComponent("ground-soil-detection", {
       }
     );
 
-    if (navigator.xr) {
-      console.log("WebXR supported: Using ground detection");
-      navigator.xr.isSessionSupported("immersive-ar").then((supported) => {
-        if (supported) {
-          this.setupWebXR();
-        } else {
-          console.log(
-            "immersive-ar not supported. Falling back to AR.js markers"
-          );
-          this.setupMarkerFallback();
-        }
-      });
-    } else {
-      console.log("WebXR not supported: Falling back to AR.js markers");
-      this.setupMarkerFallback();
-    }
+    // if (navigator.xr) {
+    //   console.log("WebXR supported: Using ground detection");
+    //   navigator.xr.isSessionSupported("immersive-ar").then((supported) => {
+    //     if (supported) {
+    //       this.setupWebXR();
+    //     } else {
+    //       console.log(
+    //         "immersive-ar not supported. Falling back to AR.js markers"
+    //       );
+    //       this.setupMarkerFallback();
+    //     }
+    //   });
+    // } else {
+    //   console.log("WebXR not supported: Falling back to AR.js markers");
+    //   this.setupMarkerFallback();
+    // }
+    this.setupMarkerFallback();
   },
 
-  setupWebXR: function () {
-    const el = this.el;
-    const model = this.model;
-    let hitTestSource = null;
-    let sessionStarted = false;
+  // setupWebXR: function () {
+  //   const el = this.el;
+  //   const model = this.model;
+  //   let hitTestSource = null;
+  //   let sessionStarted = false;
 
-    if (!navigator.xr || sessionStarted) return;
-    sessionStarted = true;
+  //   if (!navigator.xr || sessionStarted) return;
+  //   sessionStarted = true;
 
-    navigator.xr
-      .requestSession("immersive-ar", { requiredFeatures: ["hit-test"] })
-      .then((session) => {
-        const sceneEl = el.sceneEl;
+  //   navigator.xr
+  //     .requestSession("immersive-ar", { requiredFeatures: ["hit-test"] })
+  //     .then((session) => {
+  //       const sceneEl = el.sceneEl;
 
-        sceneEl.renderer.xr.setSession(session);
+  //       sceneEl.renderer.xr.setSession(session);
 
-        session
-          .requestReferenceSpace("local")
-          .then((refSpace) => session.requestHitTestSource({ space: refSpace }))
-          .then((source) => {
-            hitTestSource = source;
-          })
-          .catch((error) => {
-            console.error("Error setting up hit test:", error);
-            if (this.sunText) {
-              this.sunText.textContent = "Ground not detected! Try again";
-            }
-          });
+  //       session
+  //         .requestReferenceSpace("local")
+  //         .then((refSpace) => session.requestHitTestSource({ space: refSpace }))
+  //         .then((source) => {
+  //           hitTestSource = source;
+  //         })
+  //         .catch((error) => {
+  //           console.error("Error setting up hit test:", error);
+  //           if (this.sunText) {
+  //             this.sunText.textContent = "Ground not detected! Try again";
+  //           }
+  //         });
 
-        session.addEventListener("end", () => {
-          hitTestSource = null;
-          sessionStarted = false;
-        });
+  //       session.addEventListener("end", () => {
+  //         hitTestSource = null;
+  //         sessionStarted = false;
+  //       });
 
-        sceneEl.renderer.xr.addEventListener("frame", (event) => {
-          if (!hitTestSource || !model) return;
+  //       sceneEl.renderer.xr.addEventListener("frame", (event) => {
+  //         if (!hitTestSource || !model) return;
 
-          const frame = event.frame;
-          const referenceSpace = sceneEl.renderer.xr.getReferenceSpace();
-          const hitTestResults = frame.getHitTestResults(hitTestSource);
+  //         const frame = event.frame;
+  //         const referenceSpace = sceneEl.renderer.xr.getReferenceSpace();
+  //         const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-          if (hitTestResults.length > 0) {
-            const pose = hitTestResults[0].getPose(referenceSpace);
-            if (pose) {
-              model.position.set(
-                pose.transform.position.x,
-                pose.transform.position.y,
-                pose.transform.position.z
-              );
-              this.sunText.textContent = "Tap to place down soil";
-              window.addEventListener("touchstart", () => {
-                model.visible = true; // Make the model visible
-              });
-            }
-          } else {
-            if (this.sunText) {
-              this.sunText.textContent = "Ground not detected! Try again";
-            }
-          }
-        });
-      });
-  },
+  //         if (hitTestResults.length > 0) {
+  //           const pose = hitTestResults[0].getPose(referenceSpace);
+  //           if (pose) {
+  //             model.position.set(
+  //               pose.transform.position.x,
+  //               pose.transform.position.y,
+  //               pose.transform.position.z
+  //             );
+  //             this.sunText.textContent = "Tap to place down soil";
+  //             window.addEventListener("touchstart", () => {
+  //               model.visible = true; // Make the model visible
+  //             });
+  //           }
+  //         } else {
+  //           if (this.sunText) {
+  //             this.sunText.textContent = "Ground not detected! Try again";
+  //           }
+  //         }
+  //       });
+  //     });
+  // },
 
   setupMarkerFallback: function () {
     const data = this.data;
@@ -130,7 +131,8 @@ AFRAME.registerComponent("ground-soil-detection", {
         this.sunText.textContent = "Ground not detected! Try again";
       }
       return;
-    } else if (this.model) {
+    }
+    if (this.model) {
       marker.object3D.add(this.model);
       this.sunText.textContent = "Tap to place down soil";
       window.addEventListener("touchstart", () => {

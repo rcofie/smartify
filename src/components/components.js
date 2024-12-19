@@ -56,7 +56,7 @@ AFRAME.registerComponent("ground-soil", {
     src: { type: "string", default: "" },
     scale: { type: "vec3", default: { x: 2, y: 2, z: 2 } },
     sensitivity: { type: "number", default: 0.1 }, // Adjust movement speed
-    position: { type: "vec3", default: { x: 0, y: 1.6, z: -0.75 } }, // Adjust movement speed
+    position: { type: "vec3", default: { x: 0, y: 1.4, z: -0.75 } }, // Adjust movement speed
   },
 
   init: function () {
@@ -84,36 +84,36 @@ AFRAME.registerComponent("ground-soil", {
       }
     );
 
-    // // Listen for device orientation events
-    // window.addEventListener("deviceorientation", (event) => {
-    //   // Get alpha, beta, gamma values
-    //   const alpha = event.alpha || 0; // Z-axis rotation
-    //   const beta = event.beta || 0; // X-axis tilt
-    //   const gamma = event.gamma || 0; // Y-axis tilt
+    // Listen for device orientation events
+    window.addEventListener("deviceorientation", (event) => {
+      // Get alpha, beta, gamma values
+      // const alpha = event.alpha || 0; // Z-axis rotation
+      const beta = event.beta || 0; // X-axis tilt
+      const gamma = event.gamma || 0; // Y-axis tilt
 
-    //   // Normalize alpha to use as a base offset
-    //   if (startAlpha === null) startAlpha = alpha;
-    //   const adjustedAlpha = alpha - startAlpha;
+      // Normalize alpha to use as a base offset
+      // if (startAlpha === null) startAlpha = alpha;
+      // const adjustedAlpha = alpha - startAlpha;
 
-    //   // Compute offsets based on orientation
-    //   const offsetX = gamma * sensitivity; // Side-to-side controls x
-    //   const offsetY = (beta * sensitivity) / 200; // Scale down Y-axis movement
-    //   const offsetZ = (adjustedAlpha * sensitivity) / 100; // Scale down Z-axis movement
+      // Compute offsets based on orientation
+      // const offsetX = gamma * sensitivity; // Side-to-side controls x
+      const offsetY = (beta * sensitivity) / 200; // Scale down Y-axis movement
+      // const offsetZ = (adjustedAlpha * sensitivity) / 100; // Scale down Z-axis movement
 
-    //   // Calculate new position relative to the starting position
-    //   const newPosition = {
-    //     x: data.position.x + offsetX,
-    //     y: data.position.y + offsetY,
-    //     z: data.position.z + offsetZ,
-    //   };
+      // Calculate new position relative to the starting position
+      const newPosition = {
+        x: data.position.x,
+        y: data.position.y + offsetY,
+        z: data.position.z,
+      };
 
-    //   // Apply the position to the entity
-    //   el.setAttribute("position", newPosition);
+      // Apply the position to the entity
+      el.setAttribute("position", newPosition);
 
-    //   // Debug: log the position for testing
-    //   console.log(
-    //     `Position -> X: ${newPosition.x}, Y: ${newPosition.y}, Z: ${newPosition.z}`
-    //   );
-    // });
+      // Debug: log the position for testing
+      console.log(
+        `Position -> X: ${newPosition.x}, Y: ${newPosition.y}, Z: ${newPosition.z}`
+      );
+    });
   },
 });

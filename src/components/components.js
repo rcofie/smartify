@@ -41,7 +41,16 @@ AFRAME.registerComponent("ground-soil-detection", {
 
     if (navigator.xr) {
       console.log("WebXR supported: Using ground detection");
-      this.setupWebXR();
+      navigator.xr.isSessionSupported("immersive-ar").then((supported) => {
+        if (supported) {
+          this.setupWebXR();
+        } else {
+          console.log(
+            "immersive-ar not supported. Falling back to AR.js markers"
+          );
+          this.setupMarkerFallback();
+        }
+      });
     } else {
       console.log("WebXR not supported: Falling back to AR.js markers");
       this.setupMarkerFallback();

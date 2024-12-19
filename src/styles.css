@@ -1,0 +1,65 @@
+#title {
+  font-family: "Irish Grover", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 5em;
+  text-align: center;
+  color: white;
+}
+
+#button {
+  padding: 3% 6%;
+  background-color: #ffd75e;
+  font-size: 2em;
+  outline: none;
+  border: none;
+  font-family: "Irish Grover", serif;
+  font-weight: 300;
+  font-style: normal;
+  cursor: pointer;
+}
+
+#onboarding {
+  position: fixed; /* Ensures it stays in the same position relative to the viewport */
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full width of the viewport */
+  height: 100vh; /* Full height of the viewport */
+  display: flex; /* Use Flexbox for centering */
+  flex-direction: column;
+  justify-content: center; /* Horizontal centering */
+  align-items: center; /* Vertical centering */
+  background-image: url("./background.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 100; /* Ensure it appears above other elements */
+}
+
+#sun {
+  position: fixed; /* Ensures it stays in the same position relative to the viewport */
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full width of the viewport */
+  height: 100vh; /* Full height of the viewport */
+  display: flex; /* Use Flexbox for centering */
+  flex-direction: column;
+  justify-content: center; /* Horizontal centering */
+  align-items: center; /* Vertical centering */
+  background-image: url("./sun.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 99; /* Ensure it appears above other elements */
+}
+
+.sun-text {
+  font-family: "Irish Grover", serif;
+  font-weight: 300;
+  font-style: normal;
+  position: absolute;
+  right: 15%;
+  top: 1%;
+  width: 10px;
+  font-size: 1.25em;
+}

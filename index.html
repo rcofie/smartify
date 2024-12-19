@@ -1,57 +1,51 @@
 <html>
-  <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  <script src="dist/bundle.js"></script>
+  <head>
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="dist/bundle.js"></script>
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Irish+Grover&display=swap"
+      rel="stylesheet"
+    />
+  </head>
 
-  <body style="margin: 0px; overflow: hidden">
-    <a-scene embedded arjs="debugUIEnabled: false;" soundhandler>
-      <a-assets>
-        <a-asset-item
-          id="animated-asset"
-          src="https://cdn.glitch.global/aa764192-081f-4898-9fe1-65339345539a/final-astronaut.glb?v=1678448798874"
-        ></a-asset-item>
-        <a-asset-item>
-          <audio
-            id="sound"
-            src="https://cdn.glitch.global/aa764192-081f-4898-9fe1-65339345539a/paradise.mp3?v=1678386481480"
-            preload="auto"
-          ></audio>
-        </a-asset-item>
-      </a-assets>
+  <body style="margin: 0px">
+    <div id="onboarding">
+      <h1 id="title">Sunflower Quest</h1>
+      <button id="button">PLAY NOW</button>
+    </div>
+    <div id="sun">
+      <h2 class="sun-text">Look down!</h2>
+    </div>
+    <a-scene
+      obb-collider="showColliders: false"
+      renderer="colorManagement: true;"
+      button=""
+      xr-mode-ui="XRMode: ar"
+      info-message="htmlSrc: #messageText"
+      keyboard-shortcuts=""
+      screenshot=""
+      device-orientation-permission-ui=""
+      webxr="[object Object]"
+      inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js"
+      embedded
+      arjs="debugUIEnabled: false;"
+      look-controls
+    >
+      <a-light type="ambient" color="#FFF"></a-light>
+      <a-light type="directional" position="-1 1 1" intensity="0.5"></a-light>
 
-      <a-marker preset="hiro">
-        <a-entity light="type: ambient; color: #FFF; intensity: 1"></a-entity>
-        <a-light
-          type="directional"
-          position="2 0 0"
-          color="rgb(255, 0, 191)"
-          intensity="1"
-          target="#directionaltarget"
-          animation="property: color; from: rgb(255, 0, 191); to:rgb(255, 0, 0); dur: 2000; loop: true; easings: easeInOutSine; dir: alternate; autoplay: true"
-        >
-          <a-light
-            type="spot"
-            color="rgb(255, 252, 16)"
-            intensity="1"
-            angle="135"
-            animation="property: angle; from: 135; to: 180; dur: 1000; easings: easeInOutSine; loop: true; autoplay: true"
-            target="#directionaltarget"
-          >
-            <a-entity
-              position="-3 0 0"
-              gltf-model="#animated-asset"
-              scale="0.5 0.5 0.5"
-              rotation="0 90 -90"
-              animation-mixer="clip: mixamo.com; timeScale: 0.4"
-              animation="property: position; to: 1 0 0; dur: 10000; loop: true;"
-              id="directionaltarget"
-            >
-            </a-entity>
-          </a-light>
-        </a-light>
-        <a-entity sound="src: #sound" autoplay="false"></a-entity>
-      </a-marker>
-      <a-entity camera></a-entity>
+      <a-entity
+        ground-soil="src: https://cdn.glitch.global/6bdc39a1-e864-4cec-9246-df130d1ac955/DugSoil.glb?v=1734544401660; sensitivity: 0.01"
+        rotation="8 0 0"
+        position="0 1.6 -0.75"
+      ></a-entity>
+
+      <a-entity camera look-controls position="0 1.6 0"></a-entity>
     </a-scene>
   </body>
 </html>

@@ -10,68 +10,27 @@ AFRAME.registerComponent("soundhandler", {
   },
 });
 
-AFRAME.registerComponent("custom-camera", {
-  schema: {
-    position: { type: "vec3", default: { x: 0, y: 1.6, z: 0 } }, // Default camera position
-    fov: { type: "number", default: 75 }, // Field of View
-    lookControls: { type: "boolean", default: true }, // Enable look-controls
-  },
-
-  init: function () {
-    const data = this.data;
-
-    // Create a Perspective Camera
-    const camera = new THREE.PerspectiveCamera(
-      data.fov,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-
-    // Set camera position
-    camera.position.set(data.position.x, data.position.y, data.position.z);
-
-    // Add the camera to the entity's object3D
-    this.el.object3D.add(camera);
-
-    // Handle look-controls if enabled
-    if (data.lookControls) {
-      this.el.setAttribute("look-controls", ""); // A-Frame built-in behavior
-    }
-
-    // Replace A-Frame's default camera with this custom camera
-    const rendererSystem = this.el.sceneEl.systems.renderer;
-    rendererSystem.camera = camera;
-
-    // Adjust aspect ratio on window resize
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
-  },
-});
-
-AFRAME.registerComponent("ground-soil", {
+AFRAME.registerComponent("ground-soil-detection", {
   schema: {
     src: { type: "string", default: "" },
     scale: { type: "vec3", default: { x: 2, y: 2, z: 2 } },
-    position: { type: "vec3", default: { x: 0, y: 1.4, z: -0.75 } }, // Adjust movement speed
-    sensitivity: { type: "number", default: 1 }, // Enable look-controls
+    markerId: { type: "string", default: "marker" },
   },
 
   init: function () {
-    const loader = new THREE.GLTFLoader();
     const el = this.el;
     const data = this.data;
+
+    const loader = new THREE.GLTFLoader();
+    this.sunText = document.getElementById("sun-text");
+
     // Load the GLTF model
     loader.load(
       data.src,
       (gltf) => {
         this.model = gltf.scene;
-        // Apply scaling
         this.model.scale.set(data.scale.x, data.scale.y, data.scale.z);
-
-        // Add the model to the entity
+        this.model.visible = false; // Initially hidden
         el.object3D.add(this.model);
       },
       undefined,
@@ -79,30 +38,95 @@ AFRAME.registerComponent("ground-soil", {
         console.error("Error loading GLTF model:", error);
       }
     );
+
+    if (navigator.xr) {
+      console.log("WebXR supported: Using ground detection");
+      this.setupWebXR();
+    } else {
+      console.log("WebXR not supported: Falling back to AR.js markers");
+      this.setupMarkerFallback();
+    }
   },
-  // update: function () {
-  //   // Listen for device orientation events
-  //   window.addEventListener("deviceorientation", (event) => {
-  //     // Get beta (X-axis tilt)
-  //     const beta = event.beta || 0; // Range is typically -90 to 90 for most devices
 
-  //     // Compute offsetY, invert beta to make Y decrease when tilting backward
-  //     const offsetY = (beta * this.data.sensitivity) / 200; // Negative sign to invert behavior
+  setupWebXR: function () {
+    const el = this.el;
+    const model = this.model;
+    let hitTestSource = null;
+    let sessionStarted = false;
 
-  //     // Calculate new position relative to the starting position
-  //     const newPosition = {
-  //       x: this.data.position.x,
-  //       y: this.data.position.y - offsetY, // Add offsetY to move in the inverted direction
-  //       z: this.data.position.z,
-  //     };
+    if (!navigator.xr || sessionStarted) return;
+    sessionStarted = true;
 
-  //     // Apply the position to the entity
-  //     this.el.setAttribute("position", newPosition);
+    navigator.xr
+      .requestSession("immersive-ar", { requiredFeatures: ["hit-test"] })
+      .then((session) => {
+        const sceneEl = el.sceneEl;
 
-  //     // Debug: log the position for testing
-  //     console.log(
-  //       `Position -> X: ${newPosition.x}, Y: ${newPosition.y}, Z: ${newPosition.z}`
-  //     );
-  //   });
-  // },
+        sceneEl.renderer.xr.setSession(session);
+
+        session
+          .requestReferenceSpace("local")
+          .then((refSpace) => session.requestHitTestSource({ space: refSpace }))
+          .then((source) => {
+            hitTestSource = source;
+          })
+          .catch((error) => {
+            console.error("Error setting up hit test:", error);
+            if (this.sunText) {
+              this.sunText.textContent = "Ground not detected! Try again";
+            }
+          });
+
+        session.addEventListener("end", () => {
+          hitTestSource = null;
+          sessionStarted = false;
+        });
+
+        sceneEl.renderer.xr.addEventListener("frame", (event) => {
+          if (!hitTestSource || !model) return;
+
+          const frame = event.frame;
+          const referenceSpace = sceneEl.renderer.xr.getReferenceSpace();
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+          if (hitTestResults.length > 0) {
+            const pose = hitTestResults[0].getPose(referenceSpace);
+            if (pose) {
+              model.position.set(
+                pose.transform.position.x,
+                pose.transform.position.y,
+                pose.transform.position.z
+              );
+              this.sunText.textContent = "Tap to place down soil";
+              window.addEventListener("touchstart", () => {
+                model.visible = true; // Make the model visible
+              });
+            }
+          } else {
+            if (this.sunText) {
+              this.sunText.textContent = "Ground not detected! Try again";
+            }
+          }
+        });
+      });
+  },
+
+  setupMarkerFallback: function () {
+    const data = this.data;
+    const marker = document.querySelector(`#${data.markerId}`);
+
+    if (!marker) {
+      console.error(`Marker with ID "${data.markerId}" not found.`);
+      if (this.sunText) {
+        this.sunText.textContent = "Ground not detected! Try again";
+      }
+      return;
+    } else if (this.model) {
+      marker.object3D.add(this.model);
+      this.sunText.textContent = "Tap to place down soil";
+      window.addEventListener("touchstart", () => {
+        this.model.visible = true; // Show the model
+      });
+    }
+  },
 });

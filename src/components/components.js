@@ -1,22 +1,12 @@
-AFRAME.registerComponent("soundhandler", {
-  init: function () {
-    this.soundEl = document.querySelector("[sound]");
-    this.marker = document.querySelector("a-marker");
-  },
-  tick: function () {
-    if (this.marker.object3D.visible) {
-      this.soundEl.components.sound.playSound();
-    }
-  },
-});
-
 AFRAME.registerComponent("models", {
   schema: {
     soil: { type: "string", default: "" },
     packet: { type: "string", default: "" },
     seed: { type: "string", default: "" },
     wateringCan: { type: "string", default: "" },
+    raindrop: { type: "string", default: "" },
     sunflower: { type: "string", default: "" },
+    wateringAnimationComplete: { type: "boolean", default: false },
   },
 
   init: function () {
@@ -27,6 +17,7 @@ AFRAME.registerComponent("models", {
     this.marker = document.querySelector("a-marker");
     this.sun = document.getElementById("sun");
     this.sunText = document.getElementById("sun-text"); // Reference to the DOM element
+    this.parentSoil = document.getElementById("parentSoil");
 
     // Load the ground model
     this.loader.load(
@@ -42,8 +33,9 @@ AFRAME.registerComponent("models", {
         console.error("Error loading soil model:", error);
       }
     );
+
     this.sun.addEventListener("click", () => {
-      if (this.soil) {
+      if (this.soil && this.sunText.textContent === "Tap to place soil") {
         this.soil.visible = true;
         this.sunText.textContent = "Tap to plant a seed";
         this.seedAnimation();
@@ -54,11 +46,11 @@ AFRAME.registerComponent("models", {
   seedAnimation: function () {
     const packet = document.createElement("a-entity");
     packet.setAttribute("id", "packet");
-    document.getElementById("parentSoil").appendChild(packet);
+    this.parentSoil.appendChild(packet);
 
     const seed = document.createElement("a-entity");
     seed.setAttribute("id", "seed");
-    document.getElementById("parentSoil").appendChild(seed);
+    this.parentSoil.appendChild(seed);
 
     setTimeout(() => {
       this.loader.load(
@@ -68,109 +60,63 @@ AFRAME.registerComponent("models", {
           this.packet.scale.set(0.5, 0.5, 0.5);
           this.packet.position.set(-0.1, 0.3, 0);
           this.packet.rotation.set(0, 0, -0.5);
-          document.getElementById("packet").object3D.add(this.packet);
+          packet.object3D.add(this.packet);
 
-          this.sun.addEventListener("click", () => {
-            console.log("trigger seed animation");
-            // load seed in gltf
+          if (this.sunText.textContent === "Tap to plant a seed") {
+            this.sun.addEventListener("click", () => {
+              console.log("trigger seed animation");
+              // load seed in gltf
 
-            // create child entity for seed and attach the animation to that
-            this.loader.load(
-              this.data.seed,
-              (gltf) => {
-                this.seed = gltf.scene;
-                this.seed.scale.set(0.5, 0.5, 0.5);
-                this.seed.position.set(-0.06, 0.32, 0);
-                document.getElementById("seed").object3D.add(this.seed);
+              // create child entity for seed and attach the animation to that
+              this.loader.load(
+                this.data.seed,
+                (gltf) => {
+                  this.seed = gltf.scene;
+                  this.seed.scale.set(0.5, 0.5, 0.5);
+                  this.seed.position.set(-0.06, 0.32, 0);
+                  seed.object3D.add(this.seed);
 
-                // Animate the seed's position after 1 second
-                setTimeout(() => {
-                  seed.setAttribute("animation__seed", {
-                    property: "position",
-                    from: seed.position,
-                    to: "0.05 -0.33, 0",
-                    dur: "1500",
-                    dir: "normal",
-                    easing: "easeInOutQuad",
-                    loop: false,
-                  });
+                  // Animate the seed's position after 1 second
+                  setTimeout(() => {
+                    seed.setAttribute("animation__seed", {
+                      property: "position",
+                      from: seed.position,
+                      to: "0.05 -0.33, 0",
+                      dur: "1500",
+                      dir: "normal",
+                      easing: "easeInOutQuad",
+                      loop: false,
+                    });
+                    if (this.data.wateringAnimationComplete === false)
+                      this.wateringCanAnimation();
+                  }, 500);
 
-                  this.wateringCanAnimation();
-                }, 500);
-              },
-              undefined,
-              (error) => {
-                console.error("Error loading seed model:", error);
-              }
-            );
-          });
+                  setTimeout(() => {
+                    this.packet.visible = false;
+                  }, 2000);
+                },
+                undefined,
+                (error) => {
+                  console.error("Error loading seed model:", error);
+                }
+              );
+            });
+          }
         },
         undefined,
         (error) => {
           console.error("Error loading packet model:", error);
         }
       );
-    }, 2000);
+    }, 1000);
   },
 
   wateringCanAnimation: function () {
     const can = document.createElement("a-entity");
     can.setAttribute("id", "can");
-    document.getElementById("parentSoil").appendChild(can);
-
-    // start: "-0.04 0.3 0",
-    // end: "0.05 -0.33, 0",
-    // color: "#0561FF",
-
-    const progress = "percentage";
-
-    // line properties
-    const direction = new THREE.Vector3(0.09, -0.03, 0);
-    const length = direction.length();
-    direction.normalize();
-
-    // line midpoint
-
-    const midPoint = {
-      x: 0.005,
-      y: -0.015,
-      z: 0,
-    };
-
-    const lineCylinder = document.createElement("a-entity");
-    lineCylinder.setAttribute("id", "line");
-    document.getElementById("parentSoil").appendChild(lineCylinder);
-
-    lineCylinder.setAttribute("geometry", {
-      primitive: "cylinder",
-      height: 0.01,
-      radius: 0.1,
-    });
-
-    lineCylinder.setAttribute("position", "-0.04 0.3 0");
-
-    lineCylinder.setAttribute("material", "color: #0561FF");
-    lineCylinder.setAttribute("scale", "0.2 0.2 0.2");
-    lineCylinder.setAttribute(
-      "position",
-      `${midPoint.x} ${midPoint.y} ${midPoint.z}`
-    );
-    // Calculate rotation to align with the direction vector
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(
-      new THREE.Vector3(0, 1, 0), // Default cylinder axis
-      direction
-    );
-    const rotation = new THREE.Euler().setFromQuaternion(quaternion, "XYZ");
-
-    lineCylinder.setAttribute(
-      "rotation",
-      `${THREE.MathUtils.radToDeg(rotation.x)} ${THREE.MathUtils.radToDeg(
-        rotation.y
-      )} ${THREE.MathUtils.radToDeg(rotation.z)}`
-    );
+    this.parentSoil.appendChild(can);
 
     setTimeout(() => {
-      document.getElementById("packet").setAttribute("visible", "false");
       this.loader.load(
         this.data.wateringCan,
         (gltf) => {
@@ -178,23 +124,11 @@ AFRAME.registerComponent("models", {
           this.wateringCan.scale.set(0.3, 0.3, 0.3);
           this.wateringCan.position.set(-0.07, 0.3, 0);
           this.wateringCan.rotation.set(-0.15, 1.2, 0.4);
-          document.getElementById("can").object3D.add(this.wateringCan);
+          can.object3D.add(this.wateringCan);
 
-          this.sun.addEventListener("click", () => {
-            console.log("trigger watering can animation");
-
-            // Animate the height to grow dynamically
-            lineCylinder.setAttribute("animation", {
-              property: "geometry.height",
-              to: length,
-              dur: 2000,
-              easing: "easeInOutQuad",
-            });
-
-            // set progress percentage of sunText
-            this.sunText.color = "#0561FF";
-            this.sunText = `${progress}%`;
-          });
+          if (this.wateringCan) {
+            this.sunText.textContent = "Tap to water the seed";
+          }
         },
         undefined,
         (error) => {
@@ -202,5 +136,102 @@ AFRAME.registerComponent("models", {
         }
       );
     }, 2000);
+    this.sun.addEventListener("click", () => {
+      console.log("trigger watering can animation");
+      let progress = 0;
+      for (let i = 0; i < 10; i++) {
+        const raindrop = document.createElement("a-entity");
+        raindrop.setAttribute("id", `raindrop-${i}`);
+        this.parentSoil.appendChild(raindrop);
+
+        this.loader.load(
+          this.data.raindrop,
+          (gltf) => {
+            this.raindrop = gltf.scene;
+            this.raindrop.scale.set(0.00008, 0.00008, 0.00008);
+
+            this.raindrop.traverse((node) => {
+              if (node.isMesh) {
+                node.material.color.set("#0561FF");
+              }
+            });
+            raindrop.object3D.add(this.raindrop);
+          },
+          undefined,
+          (error) => {
+            console.error("Error loading raindrop model:", error);
+          }
+        );
+
+        // Calculate the x position for the raindrop
+        const xPosition = i % 2 === 0 ? 0 : 0.005;
+
+        // Add more delay for each raindrop to make the cascading effect clear
+        setTimeout(() => {
+          raindrop.setAttribute("animation__raindrop", {
+            property: "position",
+            from: `${xPosition} 0.35 0`,
+            to: `${xPosition} 0 0`,
+            dur: "1500",
+            dir: "normal",
+            easing: "easeInOutQuad",
+            loop: false,
+          });
+        }, i * 300); // Stagger increased to 300ms
+      }
+      this.data.wateringAnimationComplete = true;
+
+      // Start the progress bar updates
+      this.sunText.textContent = `${progress}%`;
+
+      const progressInterval = setInterval(() => {
+        progress += 10;
+        if (progress >= 100) {
+          clearInterval(progressInterval);
+          this.sunText.textContent = "Watering complete!";
+          setTimeout(() => {
+            this.sunflowerGrow();
+          }, 1000);
+        } else {
+          this.sunText.textContent = `${progress}%`;
+        }
+      }, 300);
+    });
+  },
+  sunflowerGrow: function () {
+    console.log("trigger sunflower animation");
+    this.sunText.textContent = "Watch your flower grow!";
+    const sunflower = document.createElement("a-entity");
+    sunflower.setAttribute("id", "sunflower");
+    this.parentSoil.appendChild(sunflower);
+
+    document.getElementById("can").setAttribute("visible", "false");
+
+    this.sun.style.pointerEvents = "none";
+
+    // load sunflower file
+    this.loader.load(
+      this.data.sunflower,
+      (gltf) => {
+        this.sunflower = gltf.scene;
+        this.sunflower.scale.set(0.1, 0.1, 0.1);
+        sunflower.object3D.add(this.sunflower);
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading sunflower model:", error);
+      }
+    );
+
+    // trigger growth animation
+    sunflower.setAttribute("animation__sunflower", {
+      property: "scale",
+      from: `0.1 0.1 0.1`,
+      to: `7 7 7`,
+      dur: "2000",
+      dir: "normal",
+      easing: "easeInOutQuad",
+      loop: false,
+    });
   },
 });
